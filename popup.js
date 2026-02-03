@@ -208,14 +208,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function downloadExcel(names) {
-        // Create CSV content for Excel
-        const headers = ['No.', 'Name', 'Extraction Date'];
+        // Create CSV content for Excel with links
+        const headers = ['No.', 'Name', 'Profile Link', 'Extraction Date'];
         const currentDate = new Date().toLocaleDateString();
         
         let csvContent = headers.join(',') + '\n';
         
         names.forEach((name, index) => {
-            csvContent += `${index + 1},"${name}","${currentDate}"\n`;
+            csvContent += `${index + 1},"${name}","","${currentDate}"\n`;
         });
 
         // Add summary at the end

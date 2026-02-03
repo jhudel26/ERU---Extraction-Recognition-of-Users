@@ -2,6 +2,7 @@
 class ERUExtractor {
   constructor() {
     this.extractedNames = [];
+    this.extractedLinks = [];
     this.isExtracting = false;
     this.observer = null;
     this.init();
@@ -92,12 +93,14 @@ class ERUExtractor {
 
   extractNamesFromPage() {
     const names = [];
+    const links = [];
     const seenNames = new Set();
     
     // Method 1: Extract from member links (most reliable) - ONLY this method
     const memberLinks = document.querySelectorAll('a[href*="/groups/"][href*="/user/"]');
     memberLinks.forEach(link => {
       const name = link.textContent.trim();
+      const href = link.href;
       const lowerName = name.toLowerCase();
       
       // Very strict filtering for actual member names
@@ -153,6 +156,7 @@ class ERUExtractor {
           !name.includes('  ') // No double spaces
         ) {
         names.push(name);
+        links.push(href);
         seenNames.add(lowerName);
       }
     });
@@ -299,27 +303,29 @@ class ERUExtractor {
             !text.includes('  ') // No double spaces
         ) {
           names.push(text);
+          links.push(''); // No link available for this method
           seenNames.add(lowerText);
         }
       });
     });
 
-    return names;
+    return { names, links };
   }
 
   extractCurrentPageNames() {
-    const currentNames = this.extractNamesFromPage();
+    const currentData = this.extractNamesFromPage();
     const seenNames = new Set(this.extractedNames.map(name => name.toLowerCase()));
     
     // Only add new names that haven't been extracted before
-    currentNames.forEach(name => {
+    currentData.names.forEach((name, index) => {
       if (!seenNames.has(name.toLowerCase())) {
         this.extractedNames.push(name);
+        this.extractedLinks.push(currentData.links[index]);
         seenNames.add(name.toLowerCase());
       }
     });
 
-    return this.extractedNames;
+    return { names: this.extractedNames, links: this.extractedLinks };
   }
 
   async scrollAndExtract() {
@@ -376,7 +382,7 @@ class ERUExtractor {
     }
 
     this.isExtracting = false;
-    return this.extractedNames;
+    return { names: this.extractedNames, links: this.extractedLinks };
   }
 
   showExtractionModal() {
@@ -593,7 +599,11 @@ class ERUExtractor {
   }
 
   copyNames() {
-    const namesText = this.extractedNames.join('\n');
+    const dataWithLinks = this.extractedNames.map((name, index) => {
+      const link = this.extractedLinks[index];
+      return link ? `${name} - ${link}` : name;
+    });
+    const namesText = dataWithLinks.join('\n');
     navigator.clipboard.writeText(namesText).then(() => {
       const btn = document.getElementById('copy-users');
       const originalText = btn.textContent;
@@ -605,7 +615,11 @@ class ERUExtractor {
   }
 
   downloadText() {
-    const namesText = this.extractedNames.join('\n');
+    const dataWithLinks = this.extractedNames.map((name, index) => {
+      const link = this.extractedLinks[index];
+      return link ? `${name} - ${link}` : name;
+    });
+    const namesText = dataWithLinks.join('\n');
     const blob = new Blob([namesText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -618,14 +632,15 @@ class ERUExtractor {
   }
 
   downloadExcel() {
-    // Create CSV content for Excel
-    const headers = ['No.', 'Name', 'Extraction Date'];
+    // Create CSV content for Excel with links
+    const headers = ['No.', 'Name', 'Profile Link', 'Extraction Date'];
     const currentDate = new Date().toLocaleDateString();
     
     let csvContent = headers.join(',') + '\n';
     
     this.extractedNames.forEach((name, index) => {
-      csvContent += `${index + 1},"${name}","${currentDate}"\n`;
+      const link = this.extractedLinks[index] || '';
+      csvContent += `${index + 1},"${name}","${link}","${currentDate}"\n`;
     });
 
     // Add summary at the end
@@ -649,9 +664,10 @@ class ERUExtractor {
 
   showNamesList() {
     const modal = document.getElementById('fb-extractor-modal');
-    const namesList = this.extractedNames.map((name, index) => 
-      `${index + 1}. ${name}`
-    ).join('\n');
+    const namesList = this.extractedNames.map((name, index) => {
+      const link = this.extractedLinks[index];
+      return link ? `${index + 1}. ${name} - ${link}` : `${index + 1}. ${name}`;
+    }).join('\n');
     
     alert(`Extracted Users (${this.extractedNames.length}):\n\n${namesList.substring(0, 2000)}${namesList.length > 2000 ? '...' : ''}`);
   }
