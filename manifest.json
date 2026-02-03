@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "ERU - Extraction & Recognition of Users",
+  "version": "1.0.0",
+  "description": "Extract user names from Facebook group pages automatically",
+  
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/groups/*/members*",
+        "https://web.facebook.com/groups/*/members*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ERU - User Extractor",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
